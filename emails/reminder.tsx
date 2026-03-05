@@ -17,7 +17,6 @@ interface ReminderEmailProps {
   time: string;
   service: string;
   cancelUrl?: string | null;
-  isOneHour: boolean;
 }
 
 export default function ReminderEmail({
@@ -26,15 +25,12 @@ export default function ReminderEmail({
   time,
   service,
   cancelUrl,
-  isOneHour,
 }: ReminderEmailProps) {
-  const delayLabel = isOneHour ? "dans 1h" : "demain";
-
   return (
     <Html lang="fr">
       <Head />
       <Preview>
-        Rappel — Ton RDV {delayLabel} chez IB Barber ({time})
+        Rappel — Ton RDV aujourd&apos;hui à {time} chez IB Barber
       </Preview>
       <Body style={body}>
         <Container style={container}>
@@ -43,7 +39,7 @@ export default function ReminderEmail({
 
           <Text style={text}>Salut {firstName},</Text>
           <Text style={text}>
-            Petit rappel : ton rendez-vous est {delayLabel}.
+            Petit rappel : ton rendez-vous est aujourd&apos;hui.
           </Text>
 
           <Section style={recapBox}>
