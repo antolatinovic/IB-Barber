@@ -1,0 +1,74 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createServerSupabaseClient, createServiceClient } from "@/lib/supabase/server";
+import { addDays, parseISO } from "date-fns";
+
+export async function GET(request: NextRequest) {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const weekStart = request.nextUrl.searchParams.get("weekStart");
+  if (!weekStart) {
+    return NextResponse.json({ error: "weekStart is required" }, { status: 400 });
+  }
+
+  const endDate = addDays(parseISO(weekStart), 6).toISOString().split("T")[0];
+
+  const serviceClient = createServiceClient();
+  const { data, error } = await serviceClient
+    .from("bookings")
+    .select("*, slots(date, time)")
+    .gte("slots.date", weekStart)
+    .lte("slots.date", endDate)
+    .not("slots", "is", null);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json(data);
+}
+
+export async function POST(request: NextRequest) {
+  const { slotId, firstName, lastName, snap, email, service } = await request.json();
+
+  if (!slotId || !firstName || !lastName || !snap || !email || !service) {
+    return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
+  }
+
+  const supabase = createServiceClient();
+
+  // Anti double-booking: only update if slot is not already booked
+  const { data: slot, error: slotError } = await supabase
+    .from("slots")
+    .update({ is_booked: true })
+    .eq("id", slotId)
+    .eq("is_booked", false)
+    .select()
+    .single();
+
+  if (slotError || !slot) {
+    return NextResponse.json({ error: "Ce créneau n'est plus disponible" }, { status: 409 });
+  }
+
+  const { error: bookingError } = await supabase
+    .from("bookings")
+    .insert({
+      slot_id: slotId,
+      first_name: firstName,
+      last_name: lastName,
+      snap,
+      email,
+      service,
+    });
+
+  if (bookingError) {
+    // Rollback: unbook the slot
+    await supabase.from("slots").update({ is_booked: false }).eq("id", slotId);
+    return NextResponse.json({ error: bookingError.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true, slot });
+}
