@@ -16,6 +16,7 @@ interface BookingWithSlot {
   snap: string;
   email: string;
   service: Service;
+  cancelled_at: string | null;
   created_at: string;
   slots: {
     date: string;
@@ -165,7 +166,10 @@ export default function AdminDashboardPage() {
                     .map((booking) => (
                       <div
                         key={booking.id}
-                        className="flex items-center justify-between rounded-xl border border-border p-4"
+                        className={cn(
+                          "flex items-center justify-between rounded-xl border border-border p-4",
+                          booking.cancelled_at && "opacity-50"
+                        )}
                       >
                         <div className="space-y-1">
                           <div className="flex items-center gap-3">
@@ -175,6 +179,11 @@ export default function AdminDashboardPage() {
                             <span className="text-sm font-medium">
                               {booking.first_name} {booking.last_name}
                             </span>
+                            {booking.cancelled_at && (
+                              <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-semibold text-red-400">
+                                Annulé
+                              </span>
+                            )}
                           </div>
                           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
                             <span>{SERVICES[booking.service]?.label}</span>
@@ -225,12 +234,18 @@ export default function AdminDashboardPage() {
                         className="flex items-center border-l border-border/20 px-1 py-1"
                       >
                         {booking && (
-                          <div className="w-full rounded-md bg-foreground/10 px-2 py-1">
-                            <p className="truncate text-xs font-medium">
+                          <div className={cn(
+                            "w-full rounded-md px-2 py-1",
+                            booking.cancelled_at ? "bg-red-500/10" : "bg-foreground/10"
+                          )}>
+                            <p className={cn(
+                              "truncate text-xs font-medium",
+                              booking.cancelled_at && "line-through opacity-60"
+                            )}>
                               {booking.first_name} {booking.last_name.charAt(0)}.
                             </p>
                             <p className="truncate text-[10px] text-muted-foreground">
-                              {SERVICES[booking.service]?.label}
+                              {booking.cancelled_at ? "Annulé" : SERVICES[booking.service]?.label}
                             </p>
                           </div>
                         )}

@@ -29,7 +29,8 @@ async function getStatsForPeriod(
       .select("service, slots(date)")
       .gte("slots.date", from)
       .lte("slots.date", to)
-      .not("slots", "is", null),
+      .not("slots", "is", null)
+      .is("cancelled_at", null),
   ]);
 
   const slots = slotsRes.data ?? [];

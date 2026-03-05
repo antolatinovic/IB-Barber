@@ -3,11 +3,11 @@ import { resend } from "@/lib/resend";
 import { SERVICES, type Service } from "@/types";
 import { format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import ConfirmationEmail from "@/emails/confirmation";
+import CancellationEmail from "@/emails/cancellation";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, firstName, date, time, service, cancellationToken } = await request.json();
+    const { email, firstName, date, time, service } = await request.json();
 
     if (!email || !firstName || !date || !time || !service) {
       return NextResponse.json(
@@ -30,16 +30,8 @@ export async function POST(request: NextRequest) {
     const { error } = await resend.emails.send({
       from: process.env.FROM_EMAIL || "IB Barber <reservations@ib-barber.com>",
       to: email,
-      subject: `Confirmation de ton RDV — ${formattedDate} à ${time}`,
-      react: ConfirmationEmail({
-        firstName,
-        date: formattedDate,
-        time,
-        service: serviceLabel,
-        cancelUrl: cancellationToken
-          ? `${process.env.NEXT_PUBLIC_APP_URL || "https://ib-barber.vercel.app"}/book/cancel/${cancellationToken}`
-          : null,
-      }),
+      subject: `Annulation de ton RDV — ${formattedDate} à ${time}`,
+      react: CancellationEmail({ firstName, date: formattedDate, time, service: serviceLabel }),
     });
 
     if (error) {
@@ -48,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("send-confirmation error:", err);
+    console.error("send-cancellation error:", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Erreur lors de l'envoi de l'email" },
       { status: 500 }

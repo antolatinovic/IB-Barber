@@ -15,6 +15,8 @@ export interface Booking {
   snap: string;
   email: string;
   service: Service;
+  cancellation_token: string;
+  cancelled_at: string | null;
   created_at: string;
 }
 

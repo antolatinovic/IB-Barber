@@ -64,6 +64,8 @@ export default function BookPage() {
         return;
       }
 
+      const resData = await res.json();
+
       // Fire-and-forget: send confirmation email
       fetch("/api/send-confirmation", {
         method: "POST",
@@ -74,6 +76,7 @@ export default function BookPage() {
           date: selectedSlot.date,
           time: selectedSlot.time,
           service: selectedService,
+          cancellationToken: resData.cancellationToken,
         }),
       }).catch(() => {});
 

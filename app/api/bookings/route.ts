@@ -66,7 +66,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Ce créneau n'est plus disponible" }, { status: 409 });
   }
 
-  const { error: bookingError } = await supabase
+  const cancellationToken = crypto.randomUUID();
+
+  const { data: booking, error: bookingError } = await supabase
     .from("bookings")
     .insert({
       slot_id: slotId,
@@ -75,7 +77,10 @@ export async function POST(request: NextRequest) {
       snap,
       email,
       service,
-    });
+      cancellation_token: cancellationToken,
+    })
+    .select()
+    .single();
 
   if (bookingError) {
     // Rollback: unbook the slot
@@ -83,5 +88,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: bookingError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, slot });
+  return NextResponse.json({ success: true, slot, cancellationToken: booking.cancellation_token });
 }

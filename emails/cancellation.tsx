@@ -8,35 +8,32 @@ import {
   Text,
   Heading,
   Hr,
-  Button,
 } from "@react-email/components";
 
-interface ConfirmationEmailProps {
+interface CancellationEmailProps {
   firstName: string;
   date: string;
   time: string;
   service: string;
-  cancelUrl?: string | null;
 }
 
-export default function ConfirmationEmail({
+export default function CancellationEmail({
   firstName,
   date,
   time,
   service,
-  cancelUrl,
-}: ConfirmationEmailProps) {
+}: CancellationEmailProps) {
   return (
     <Html lang="fr">
       <Head />
-      <Preview>Ton RDV chez IB Barber — {date} à {time}</Preview>
+      <Preview>Ton RDV chez IB Barber a été annulé — {date} à {time}</Preview>
       <Body style={body}>
         <Container style={container}>
           <Heading style={header}>IB BARBER</Heading>
           <Hr style={hr} />
 
           <Text style={text}>Salut {firstName},</Text>
-          <Text style={text}>Ta réservation est confirmée.</Text>
+          <Text style={text}>Ton rendez-vous a bien été annulé.</Text>
 
           <Section style={recapBox}>
             <Text style={recapRow}>
@@ -53,19 +50,8 @@ export default function ConfirmationEmail({
             </Text>
           </Section>
 
-          {cancelUrl && (
-            <>
-              <Text style={text}>
-                Tu peux annuler ta réservation jusqu&apos;à 1h avant le rendez-vous :
-              </Text>
-              <Button href={cancelUrl} style={cancelButton}>
-                Annuler ma réservation
-              </Button>
-            </>
-          )}
-
           <Text style={text}>
-            Pour toute autre demande, contacte-moi sur Snapchat :
+            Pour reprendre rendez-vous, contacte-moi sur Snapchat :
           </Text>
           <Text style={snapHandle}>@i-ftyyy08</Text>
 
@@ -134,18 +120,6 @@ const recapLabel: React.CSSProperties = {
 const recapValue: React.CSSProperties = {
   color: "#ffffff",
   fontWeight: 600,
-};
-
-const cancelButton: React.CSSProperties = {
-  backgroundColor: "#27272a",
-  color: "#ffffff",
-  borderRadius: "8px",
-  fontSize: "14px",
-  fontWeight: 600,
-  padding: "12px 24px",
-  textDecoration: "none",
-  display: "inline-block",
-  margin: "8px 0 16px",
 };
 
 const snapHandle: React.CSSProperties = {
