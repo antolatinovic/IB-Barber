@@ -160,6 +160,8 @@ export default function WeekSlotBuilder() {
       });
       if (res.ok) {
         await fetchExistingSlots(weekStart);
+      } else {
+        alert("Erreur lors de la publication des créneaux");
       }
     } finally {
       setIsPublishing(false);
@@ -170,6 +172,8 @@ export default function WeekSlotBuilder() {
     const res = await fetch(`/api/slots?id=${id}`, { method: "DELETE" });
     if (res.ok) {
       setExistingSlots((prev) => prev.filter((s) => s.id !== id));
+    } else {
+      alert("Erreur lors de la suppression du créneau");
     }
   };
 

@@ -38,6 +38,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
   }
 
+  if (firstName.length > 50 || lastName.length > 50 || snap.length > 50) {
+    return NextResponse.json({ error: "Les champs ne doivent pas dépasser 50 caractères" }, { status: 400 });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email) || email.length > 254) {
+    return NextResponse.json({ error: "Email invalide" }, { status: 400 });
+  }
+
+  if (service !== "coupe" && service !== "coupe_barbe") {
+    return NextResponse.json({ error: "Service invalide" }, { status: 400 });
+  }
+
   const supabase = createServiceClient();
 
   // Anti double-booking: only update if slot is not already booked
