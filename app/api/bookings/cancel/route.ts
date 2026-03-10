@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const supabase = createServiceClient();
   const { data: booking, error } = await supabase
     .from("bookings")
-    .select("id, first_name, service, cancelled_at, slots(date, time)")
+    .select("id, slot_id, first_name, service, cancelled_at")
     .eq("cancellation_token", token)
     .single();
 
@@ -23,7 +23,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ alreadyCancelled: true }, { status: 200 });
   }
 
-  const slot = booking.slots as unknown as { date: string; time: string };
+  const { data: slot } = await supabase
+    .from("slots")
+    .select("date, time")
+    .eq("id", booking.slot_id)
+    .single();
+
+  if (!slot) {
+    return NextResponse.json({ error: "Créneau introuvable" }, { status: 404 });
+  }
+
   const appointmentTime = parseISO(`${slot.date}T${slot.time}`);
   const now = new Date();
   const diffMs = appointmentTime.getTime() - now.getTime();
@@ -48,7 +57,7 @@ export async function POST(request: NextRequest) {
 
   const { data: booking, error: fetchError } = await supabase
     .from("bookings")
-    .select("id, slot_id, second_slot_id, first_name, email, service, cancelled_at, slots(date, time)")
+    .select("id, slot_id, second_slot_id, first_name, email, service, cancelled_at")
     .eq("cancellation_token", token)
     .single();
 
@@ -60,8 +69,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Cette réservation a déjà été annulée" }, { status: 409 });
   }
 
+  // Fetch slot info separately (avoid PostgREST FK ambiguity)
+  const { data: slot } = await supabase
+    .from("slots")
+    .select("date, time")
+    .eq("id", booking.slot_id)
+    .single();
+
+  if (!slot) {
+    return NextResponse.json({ error: "Créneau introuvable" }, { status: 404 });
+  }
+
   // Check 1h rule server-side
-  const slot = booking.slots as unknown as { date: string; time: string };
   const appointmentTime = parseISO(`${slot.date}T${slot.time}`);
   const now = new Date();
   if (appointmentTime.getTime() - now.getTime() <= 60 * 60 * 1000) {

@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
   const { data: booking, error: fetchError } = await serviceClient
     .from("bookings")
-    .select("id, slot_id, second_slot_id, first_name, email, service, cancelled_at, slots(date, time)")
+    .select("id, slot_id, second_slot_id, first_name, email, service, cancelled_at")
     .eq("id", bookingId)
     .single();
 
@@ -29,6 +29,13 @@ export async function POST(request: NextRequest) {
   if (booking.cancelled_at) {
     return NextResponse.json({ error: "Déjà annulée" }, { status: 409 });
   }
+
+  // Fetch slot info for the cancellation email
+  const { data: slot } = await serviceClient
+    .from("slots")
+    .select("date, time")
+    .eq("id", booking.slot_id)
+    .single();
 
   // Free the slot(s)
   const { error: slotError } = await serviceClient
@@ -63,19 +70,20 @@ export async function POST(request: NextRequest) {
   }
 
   // Send cancellation email to client
-  const slot = booking.slots as unknown as { date: string; time: string };
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  fetch(`${baseUrl}/api/send-cancellation`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: booking.email,
-      firstName: booking.first_name,
-      date: slot.date,
-      time: slot.time,
-      service: booking.service,
-    }),
-  }).catch(() => {});
+  if (slot) {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    fetch(`${baseUrl}/api/send-cancellation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: booking.email,
+        firstName: booking.first_name,
+        date: slot.date,
+        time: slot.time,
+        service: booking.service,
+      }),
+    }).catch(() => {});
+  }
 
   return NextResponse.json({ success: true });
 }
